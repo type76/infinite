@@ -28,6 +28,8 @@
 	var bpoints = 0;
 	var gpoints = 0;
 	var stopwarp = true;
+  var xmove = 0.05;
+  var keyboard;
 
 var collidableMeshList = [];
 var chk = document.getElementById('chk');
@@ -38,56 +40,55 @@ var collidableMeshList = [];
 var bpoints = 0;
 var gpoints = 0;
 var xwall = 5;
+var xdif = 0;
+var ydif = 0;
+// function movehero(x, y) {
+// 		hero.position.x = x;
+// 		hero.position.z = y;
+//     xval = 0;
+//     // tween spider with speed based on distance
+//     var distance = spider.position.distanceTo( hero.position );
+//     // rotate spider to face pointer
+//     if (distance>1) { spider.lookAt(hero.position.x, 0.5, hero.position.z); }
+//     // tween spider to pointer position
+//     new TWEEN.Tween( spider.position ).to( {x:x, y:spider.position.y, z:y}, 500+(distance*50) )
+//         .onComplete(function() {
+//     // spider.rotation.set(0,0,0);
+//         xval = 0;
+//   }).onUpdate(function() {
+//     if (distance>0.5) {xval = distance/2000;}
+//   }).start();
 
-// update touch
-	var updateTouchCoordinates = function(evt) {
-	stopwarp = false; 
-	mouse.x = ( evt.touches[0].pageX / window.innerWidth ) * 2 - 1;
-	mouse.y = - ( evt.touches[0].pageY / window.innerHeight ) * 2 + 1;
-	raycaster.setFromCamera( mouse, camera );
-	var intersects = raycaster.intersectObject( plane );
-	if (intersects.length > 0) { 
-		movehero(intersects[ 0 ].point.x, intersects[ 0 ].point.z);
-		 }
-};
-
-
-// update mouse
-var updateMouseCoordinates = function(evt) {
-	evt.preventDefault();
-	mouse.x = ( evt.clientX / window.innerWidth ) * 2 - 1;
-	mouse.y = - ( evt.clientY / window.innerHeight ) * 2 + 1;
-	raycaster.setFromCamera( mouse, camera );
-	var intersects = raycaster.intersectObject( plane );
-	if (intersects.length > 0) { 
-		movehero(Math.round(intersects[ 0 ].point.x), Math.round(intersects[ 0 ].point.z));
-		 }
-};
+// }
 
 
-function movehero(x, y) {
-		hero.position.x = x;
-		hero.position.z = y;
-    xval = 0;
-    // tween spider with speed based on distance
-    var distance = spider.position.distanceTo( hero.position );
-    // rotate spider to face pointer
-    if (distance>1) { spider.lookAt(hero.position.x, 0.5, hero.position.z); }
-    // tween spider to pointer position
-    new TWEEN.Tween( spider.position ).to( {x:x, y:spider.position.y, z:y}, 500+(distance*50) )
-        .onComplete(function() {
-    // spider.rotation.set(0,0,0);
-        xval = 0;
-  }).onUpdate(function() {
-    if (distance>0.5) {xval = distance/2000;}
-  }).start();
 
+// KEYS
+keyboard = {
+    _pressed: {},
+
+    LEFT: 37,
+    UP: 38,
+    RIGHT: 39,
+    DOWN: 40,
+
+isDown: function(keyCode) {
+    return this._pressed[keyCode];
+},
+
+onKeydown: function(event) {
+    this._pressed[event.keyCode] = true;
+},
+
+onKeyup: function(event) {
+    delete this._pressed[event.keyCode];
 }
+};
+//
+window.addEventListener( 'resize', onWindowResize, false );
+window.addEventListener('keyup', function(event) { keyboard.onKeyup(event); }, false);
+window.addEventListener('keydown', function(event) { keyboard.onKeydown(event); }, false);
 
-
-window.addEventListener('touchstart', updateTouchCoordinates);
-window.addEventListener('touchmove', updateTouchCoordinates);
-window.addEventListener( 'mouseup', updateMouseCoordinates, false );
 
 
 // THREE.JS
@@ -107,17 +108,17 @@ controls.minDistance = 2;
 controls.enablePan = false;
 
 // camera
-camera.position.y = 0.5;
-camera.position.z = 2;
+camera.position.y = 8;
+camera.position.z = 0.1;
 camera.lookAt(0,0,0)
 
 // groups
-hero = new THREE.Group();
-scene.add( hero );
+cursor = new THREE.Group();
+scene.add( cursor );
 //
-spider = new THREE.Group();
-spider.position.set( 0, 0.5,  0);
-scene.add( spider );
+selection = new THREE.Group();
+selection.position.set( 0, 0.5,  0);
+scene.add( selection );
 
 
 //raycaster
@@ -140,7 +141,8 @@ scene.add( plane );
 // lights
 var pointLight = new THREE.PointLight( 0xffffff, 1, 50 );
 pointLight.position.set( 0, 3, -2 );
-spider.add( pointLight );
+selection.add( pointLight );
+
 var alight = new THREE.AmbientLight( 0xffffff );
 alight.intensity = 0.2;
 scene.add( alight );
@@ -166,7 +168,7 @@ morphTargets: true
         gltf.scene.position.y = -0.5;
 
         gltf.scene.name = 'spscene';
-        spider.add(gltf.scene);
+        selection.add(gltf.scene);
 
     });
 
@@ -185,7 +187,7 @@ scene.add( web );
 var bgeometry = new THREE.BoxGeometry( 0.5, 0.5, 0.5 );
 var mmaterial = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
 var cube = new THREE.Mesh( bgeometry, mmaterial );
-hero.add( cube );
+selection.add( cube );
 cube.visible = false;
 
 
@@ -200,27 +202,27 @@ var animate = function () {
 	TWEEN.update();
     requestAnimationFrame( animate );
   renderer.render(scene, camera);
-//hit
-  for (var vertexIndex = 0; vertexIndex < cube.geometry.vertices.length; vertexIndex++)
-  {   
-    var directionVector = new THREE.Vector3( 0, -1, 0 );
-    var ray = new THREE.Raycaster( spider.position, directionVector.normalize() );
-    var collisionResults = ray.intersectObjects( collidableMeshList );
-    if ( collisionResults.length > 0 && collidableMeshList.distance < directionVector.length() ) 
-      console.log('');
-      hit(collisionResults);
-  } 
+  playerupdate();
+// //hit
+//   for (var vertexIndex = 0; vertexIndex < cube.geometry.vertices.length; vertexIndex++)
+//   {   
+//     var directionVector = new THREE.Vector3( 0, -1, 0 );
+//     var ray = new THREE.Raycaster( spider.position, directionVector.normalize() );
+//     var collisionResults = ray.intersectObjects( collidableMeshList );
+//     if ( collisionResults.length > 0 && collidableMeshList.distance < directionVector.length() ) 
+//       console.log('');
+//       hit(collisionResults);
+//   } 
 
 }; //animate loop
 
 
 // resize
-window.addEventListener('resize', function() {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-}, false);
-
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize( window.innerWidth, window.innerHeight );
+}
 
 animate();
 
@@ -272,30 +274,59 @@ if ( v.length > 0) {
 
     setTimeout(function() {
     v[0].object.scale.y = 1;
-            if (v[0].object.name == 'blue') {bpoints+=1; 
-          // console.log('b:'+ Math.round(bpoints));
-        // document.getElementById('blue').innerHTML = 'x:'+ Math.round(bpoints);
+        if (v[0].object.name == 'blue') {bpoints+=1; 
         }
         if (v[0].object.name == 'green') {gpoints+=1; 
-          // console.log('g:'+ Math.round(gpoints));
-        // document.getElementById('green').innerHTML = 'y:'+ Math.round(gpoints);
         }
     }, 100);
 }//if
 }// fn hit
 
 
-//golow
-function golow() {
-camera.position.y = 0.5;
-camera.position.x = 2;
-}
 
-//gohigh
-function gohigh() {
-camera.position.y = 9;
-camera.position.x = 0;
-}
+
+// player movement update
+function playerupdate() {
+    if (keyboard.isDown(keyboard.LEFT))   {
+        selection.rotation.y += xmove; 
+    }
+    if (keyboard.isDown(keyboard.RIGHT))   {
+        selection.rotation.y -= xmove; 
+    }
+    if (keyboard.isDown(keyboard.UP))   {
+        cursor.position.z -= xmove; 
+    }
+    if (keyboard.isDown(keyboard.DOWN))   {
+        cursor.position.z += xmove; 
+    }
+xdif = (cursor.position.x - selection.position.x)*0.2;
+ydif = (cursor.position.z - selection.position.z)*0.2;
+selection.position.x += xdif;
+selection.position.z += ydif;
+        xval = xdif/20;           
+        xval = ydif/20;           
+}// move player
+
+
+// function movehero(x, y) {
+//     hero.position.x = x;
+//     hero.position.z = y;
+//     xval = 0;
+//     // tween spider with speed based on distance
+//     var distance = spider.position.distanceTo( hero.position );
+//     // rotate spider to face pointer
+//     if (distance>1) { spider.lookAt(hero.position.x, 0.5, hero.position.z); }
+//     // tween spider to pointer position
+//     new TWEEN.Tween( spider.position ).to( {x:x, y:spider.position.y, z:y}, 500+(distance*50) )
+//         .onComplete(function() {
+//     // spider.rotation.set(0,0,0);
+//         xval = 0;
+//   }).onUpdate(function() {
+//     if (distance>0.5) {xval = distance/2000;}
+//   }).start();
+
+// }
+
 </script>
 </body>
 </html>
