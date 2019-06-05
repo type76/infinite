@@ -1,32 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>platformer</title>
-	<style type="text/css">
-	body, input {margin: 0; background: #000; color: #fff; font-family: monospace; overflow: hidden;}
-	#hud {position: absolute; color: #fff; width: 90%; padding: 0 10% 0 0;}
-  #hud p {padding: 0 0 0 20px;}
-  #green, #blue {position: absolute; bottom: 0; background: #333; padding: 1em;}
-  #blue {right:0;}
-  #low, #high { position: absolute; display: block; background: red; width: 40px; height: 40px; border-radius: 40px; border:none; outline: none; margin-bottom: 4px; color: #fff; text-indent: -100000em; cursor: pointer;}
-  #low:hover, #high:hover {background: #ccc;}
-  #high {right: 12px; top:12px;}
-  #low {right: 60px; top: 12px;}
+  <title>platformer</title>
+  <style type="text/css">
+  body, input {margin: 0; background: #000; color: #fff; font-family: monospace; overflow: hidden;}
 </style>
 </head>
 <body>
-    
-<script src="js/three.min.js"></script>
-<script src="js/GLTFLoader.js"></script>
-<script src="js/OrbitControls.min.js"></script>
-<script src="js/tween.js"></script>
 
+  <script src="js/three.min.js"></script>
+  <script src="js/GLTFLoader.js"></script>
+  <script src="js/OrbitControls.min.js"></script>
+  <script src="js/tween.js"></script>
 
-
-
-	<script type="text/javascript">
-	var bpoints = 0;
-	var gpoints = 0;
+  <script type="text/javascript">
+  var bpoints = 0;
+  var gpoints = 0;
   var xmove = 0.05;
   var keyboard;
 
@@ -36,30 +25,30 @@
   var prevTime = Date.now();
   var xval = 0.000;
   var collidableMeshList = [];
-  var xwall = 5;
+  var xbonus = 5;
   var xdif = 0;
   var ydif = 0;
 
 // KEYS
 keyboard = {
-    _pressed: {},
+  _pressed: {},
 
-    LEFT: 37,
-    UP: 38,
-    RIGHT: 39,
-    DOWN: 40,
+  LEFT: 37,
+  UP: 38,
+  RIGHT: 39,
+  DOWN: 40,
 
-isDown: function(keyCode) {
+  isDown: function(keyCode) {
     return this._pressed[keyCode];
-},
+  },
 
-onKeydown: function(event) {
+  onKeydown: function(event) {
     this._pressed[event.keyCode] = true;
-},
+  },
 
-onKeyup: function(event) {
+  onKeyup: function(event) {
     delete this._pressed[event.keyCode];
-}
+  }
 };
 //
 window.addEventListener( 'resize', onWindowResize, false );
@@ -106,7 +95,7 @@ var isDragging = false;
 //transparent raycasting plane
 var geometry = new THREE.PlaneBufferGeometry( 10, 10, 10, 10 );
 var material = new THREE.MeshBasicMaterial( { 
-wireframe:true,color: 0x333333,transparent:true,opacity:0
+  wireframe:true,color: 0x333333,transparent:true,opacity:0
 } );
 var plane = new THREE.Mesh( geometry, material );
 plane.name = 'plane';
@@ -125,29 +114,29 @@ alight.intensity = 0.2;
 scene.add( alight );
 
 // spider                           
-    var objs = [];
-    var loader = new THREE.GLTFLoader();
-    loader.load("spiderwalk2.glb", gltf => {
-gltf.scene.children[0].material = new THREE.MeshPhongMaterial( {
-color: 0xff0000,
-side  : THREE.DoubleSide,
-morphTargets: true
-} ) ;
+var objs = [];
+var loader = new THREE.GLTFLoader();
+loader.load("spiderwalk2.glb", gltf => {
+  gltf.scene.children[0].material = new THREE.MeshPhongMaterial( {
+    color: 0xff0000,
+    side  : THREE.DoubleSide,
+    morphTargets: true
+  } ) ;
 
-        mixer = new THREE.AnimationMixer(gltf.scene);
+  mixer = new THREE.AnimationMixer(gltf.scene);
 
-        for (const anim of gltf.animations) {
-            mixer.clipAction(anim).play();
-        }
+  for (const anim of gltf.animations) {
+    mixer.clipAction(anim).play();
+  }
 
-        gltf.scene.scale.set(0.005, 0.005, 0.005);     
-        gltf.scene.children[0].castShadow = true;
-        gltf.scene.position.y = -0.5;
+  gltf.scene.scale.set(0.005, 0.005, 0.005);     
+  gltf.scene.children[0].castShadow = true;
+  gltf.scene.position.y = 0;
 
-        gltf.scene.name = 'spscene';
-        cursor.add(gltf.scene);
+  gltf.scene.name = 'spscene';
+  cursor.add(gltf.scene);
 
-    });
+});
 
 // web
 var radius = 5;
@@ -171,14 +160,14 @@ ccube.visible = false;
 
 var animate = function () {
   if ( mixer ) {
-  var time = Date.now();
-  mixer.update( ( time - prevTime ) * xval );
-  prevTime = time;
-  camera.lookAt(0,0,0)
-}
+    var time = Date.now();
+    mixer.update( ( time - prevTime ) * xval );
+    prevTime = time;
+    camera.lookAt(0,0,0)
+  }
 
-	TWEEN.update();
-    requestAnimationFrame( animate );
+  TWEEN.update();
+  requestAnimationFrame( animate );
   renderer.render(scene, camera);
   playerupdate();
 }; //animate loop
@@ -186,9 +175,9 @@ var animate = function () {
 
 // resize
 function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize( window.innerWidth, window.innerHeight );
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize( window.innerWidth, window.innerHeight );
 }
 
 animate();
@@ -196,77 +185,86 @@ animate();
 
 
 
-walls();
+bonus();
 
-function walls() {
-  var wallGeometry = new THREE.CubeGeometry( 0.75, 0.75, 0.75 );
- var xmat = new THREE.MeshBasicMaterial( {color: 0xffffff
-  ,transparent:true,opacity:0.8
-} );
+function bonus() {
+  var bonusGeometry = new THREE.CubeGeometry( 0.75, 0.75, 0.75 );
+  var xmat = new THREE.MeshBasicMaterial( {color: 0xffffff
+    ,transparent:true,opacity:0.8
+  } );
   var blue = xmat;
   var green = xmat;
 
-  var wall = new THREE.Mesh(wallGeometry, blue);
-  wall.position.set(-3, 0, -3);
-  wall.name = 'blue';
-  scene.add(wall);
-  collidableMeshList.push(wall);
+  var bonus = new THREE.Mesh(bonusGeometry, blue);
+  bonus.position.set(-3, 0, -3);
+  bonus.name = 'blue';
+  scene.add(bonus);
+  collidableMeshList.push(bonus);
 
-  
-  var wall2 = new THREE.Mesh(wallGeometry, green);
-  wall2.position.set(5, 0, -5);
-  wall2.name = 'green';
-  scene.add(wall2);
-  collidableMeshList.push(wall2);
+
+  var bonus2 = new THREE.Mesh(bonusGeometry, green);
+  bonus2.position.set(5, 0, -5);
+  bonus2.name = 'green';
+  scene.add(bonus2);
+  collidableMeshList.push(bonus2);
 }
 
 
 
 // HIT function
 function hit (v) {
-if ( v.length > 0) {
-  var num = Math.floor(Math.random()*xwall) + 1;
-  num *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
-  var num2 = Math.floor(Math.random()*xwall) + 1;
-  num2 *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
-    // console.log('hit')
+  if ( v.length > 0) {
+    var num = Math.floor(Math.random()*xbonus) + 1;
+    num *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
+    var num2 = Math.floor(Math.random()*xbonus) + 1;
+    num2 *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
+// console.log('hit')
+v[0].object.scale.y = 5;
+setTimeout(function() {
+  v[0].object.position.x = num;
+  v[0].object.position.z = num2;
   v[0].object.scale.y = 5;
-  setTimeout(function() {
-        v[0].object.position.x = num;
-        v[0].object.position.z = num2;
-        v[0].object.scale.y = 5;
 
 
-    }, 90);
+}, 90);
 
-    setTimeout(function() {
-    v[0].object.scale.y = 1;
-        if (v[0].object.name == 'blue') {bpoints+=1; 
-        }
-        if (v[0].object.name == 'green') {gpoints+=1; 
-        }
-    }, 100);
+setTimeout(function() {
+  v[0].object.scale.y = 1;
+  if (v[0].object.name == 'blue') {bpoints+=1; 
+  }
+  if (v[0].object.name == 'green') {gpoints+=1; 
+  }
+}, 100);
 }//if
 }// fn hit
 
 
+// on space>lurch forward
+document.body.onkeyup = function(e){
+  if(e.keyCode == 32){
+    if (keyboard.isDown(keyboard.DOWN))   {
+        selection.translateZ( 2 );
+    } else {
+        selection.translateZ( -2 );
+    }
+  }
+}
 
 
 // player movement update
 function playerupdate() {
-    if (keyboard.isDown(keyboard.LEFT))   {
-        selection.rotation.y += xmove; 
-
-    }
-    if (keyboard.isDown(keyboard.RIGHT))   {
-       selection.rotation.y -= xmove; 
-          }
-    if (keyboard.isDown(keyboard.UP))   {
-        selection.translateZ( -xmove );
-    }
-    if (keyboard.isDown(keyboard.DOWN))   {
-        selection.translateZ( xmove );
-    }
+  if (keyboard.isDown(keyboard.LEFT))   {
+    selection.rotation.y += xmove; 
+  }
+  if (keyboard.isDown(keyboard.RIGHT))   {
+    selection.rotation.y -= xmove; 
+  }
+  if (keyboard.isDown(keyboard.UP))   {
+    selection.translateZ( -xmove );
+  }
+  if (keyboard.isDown(keyboard.DOWN))   {
+    selection.translateZ( xmove );
+  }
 // lerp position cursor
 cursor.position.x += (selection.position.x - cursor.position.x)*0.5;
 cursor.position.z += (selection.position.z - cursor.position.z)*0.5;
@@ -277,27 +275,20 @@ var rotdiff = cursor.rotation.y-selection.rotation.y;
 var invrotdiff = selection.rotation.y-cursor.rotation.y;
 var distance = selection.position.distanceTo( cursor.position );
 xval = (distance-0.5);           
-// xval += (rotdiff/2); 
 // //hit
-  for (var vertexIndex = 0; vertexIndex < ccube.geometry.vertices.length; vertexIndex++)
-  {   
-    var directionVector = new THREE.Vector3( 0, -1, 0 );
-    var ray = new THREE.Raycaster( selection.position, directionVector.normalize() );
-    var collisionResults = ray.intersectObjects( collidableMeshList );
-    if ( collisionResults.length > 0 && collidableMeshList.distance < directionVector.length() ) 
-      console.log('');
-      hit(collisionResults);
-  } 
+for (var vertexIndex = 0; vertexIndex < ccube.geometry.vertices.length; vertexIndex++)
+{   
+  var directionVector = new THREE.Vector3( 0, -1, 0 );
+  var ray = new THREE.Raycaster( selection.position, directionVector.normalize() );
+  var collisionResults = ray.intersectObjects( collidableMeshList );
+  if ( collisionResults.length > 0 && collidableMeshList.distance < directionVector.length() ) 
+    console.log('');
+  hit(collisionResults);
+} 
 }// player update
 
 
 
-// on space>lurch forward
-document.body.onkeyup = function(e){
-    if(e.keyCode == 32){
-        selection.translateZ( -2 );
-    }
-}
 </script>
 </body>
 </html>
