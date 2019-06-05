@@ -166,6 +166,7 @@ var mmaterial = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
 ccube = new THREE.Mesh( bgeometry, mmaterial );
 ccube.position.set(0,-0.5,0);
 selection.add( ccube );
+ccube.visible = false;
 
 
 var animate = function () {
@@ -184,7 +185,7 @@ var animate = function () {
   for (var vertexIndex = 0; vertexIndex < ccube.geometry.vertices.length; vertexIndex++)
   {   
     var directionVector = new THREE.Vector3( 0, -1, 0 );
-    var ray = new THREE.Raycaster( ccube.position, directionVector.normalize() );
+    var ray = new THREE.Raycaster( selection.position, directionVector.normalize() );
     var collisionResults = ray.intersectObjects( collidableMeshList );
     if ( collisionResults.length > 0 && collidableMeshList.distance < directionVector.length() ) 
       console.log('');
