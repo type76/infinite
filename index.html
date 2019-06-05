@@ -145,7 +145,7 @@ morphTargets: true
         gltf.scene.position.y = -0.5;
 
         gltf.scene.name = 'spscene';
-        selection.add(gltf.scene);
+        cursor.add(gltf.scene);
 
     });
 
@@ -165,7 +165,7 @@ var bgeometry = new THREE.BoxGeometry( 0.5, 0.5, 0.5 );
 var mmaterial = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
 ccube = new THREE.Mesh( bgeometry, mmaterial );
 ccube.position.set(0,-0.5,0);
-selection.add( ccube );
+cursor.add( ccube );
 ccube.visible = false;
 
 
@@ -267,17 +267,17 @@ function playerupdate() {
     if (keyboard.isDown(keyboard.DOWN))   {
         selection.translateZ( xmove );
     }
-// lerp cursor
-cursor.position.x += (selection.position.x - cursor.position.x)*0.9;
-cursor.position.z += (selection.position.z - cursor.position.z)*0.9;
-
-
-cursor.rotation.y += (selection.rotation.y - cursor.rotation.y)*0.9;
-// use distance for walk
+// lerp position cursor
+cursor.position.x += (selection.position.x - cursor.position.x)*0.5;
+cursor.position.z += (selection.position.z - cursor.position.z)*0.5;
+// lerp rotate cursor
+cursor.rotation.y += (selection.rotation.y - cursor.rotation.y)*0.5;
+// use distance/rotation for walk
 var rotdiff = cursor.rotation.y-selection.rotation.y;
+var invrotdiff = selection.rotation.y-cursor.rotation.y;
 var distance = selection.position.distanceTo( cursor.position );
-xval = (distance-0.5)*100;           
-xval+= (rotdiff)/2; 
+xval = (distance-0.5);           
+// xval += (rotdiff/2); 
 // //hit
   for (var vertexIndex = 0; vertexIndex < ccube.geometry.vertices.length; vertexIndex++)
   {   
