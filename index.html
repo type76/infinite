@@ -73,19 +73,16 @@ controls.maxDistance = 10;
 controls.minDistance = 2;
 controls.enablePan = false;
 
-// camera
-camera.position.y = 8;
-camera.position.z = 0.1;
-camera.lookAt(0,0,0)
-
 // groups
 cursor = new THREE.Group();
 scene.add( cursor );
-//
+// selection group
 selection = new THREE.Group();
 selection.position.set( 0, 0.5,  0);
 scene.add( selection );
 
+// camera
+camera.position.y = 8;
 
 //raycaster
 var raycaster = new THREE.Raycaster();
@@ -170,6 +167,9 @@ var animate = function () {
   requestAnimationFrame( animate );
   renderer.render(scene, camera);
   playerupdate();
+camera.position.x = cursor.position.x;
+camera.position.z = cursor.position.z;
+camera.lookAt(cursor.position)
 }; //animate loop
 
 
