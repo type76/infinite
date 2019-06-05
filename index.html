@@ -256,6 +256,7 @@ if ( v.length > 0) {
 function playerupdate() {
     if (keyboard.isDown(keyboard.LEFT))   {
         selection.rotation.y += xmove; 
+
     }
     if (keyboard.isDown(keyboard.RIGHT))   {
        selection.rotation.y -= xmove; 
@@ -269,10 +270,14 @@ function playerupdate() {
 // lerp cursor
 cursor.position.x += (selection.position.x - cursor.position.x)*0.9;
 cursor.position.z += (selection.position.z - cursor.position.z)*0.9;
+
+
+cursor.rotation.y += (selection.rotation.y - cursor.rotation.y)*0.9;
 // use distance for walk
+var rotdiff = cursor.rotation.y-selection.rotation.y;
 var distance = selection.position.distanceTo( cursor.position );
 xval = (distance-0.5)*100;           
- 
+xval+= (rotdiff)/2; 
 // //hit
   for (var vertexIndex = 0; vertexIndex < ccube.geometry.vertices.length; vertexIndex++)
   {   
@@ -286,6 +291,13 @@ xval = (distance-0.5)*100;
 }// player update
 
 
+
+// on space>lurch forward
+document.body.onkeyup = function(e){
+    if(e.keyCode == 32){
+        selection.translateZ( -2 );
+    }
+}
 </script>
 </body>
 </html>
