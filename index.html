@@ -181,17 +181,6 @@ var animate = function () {
     requestAnimationFrame( animate );
   renderer.render(scene, camera);
   playerupdate();
-// //hit
-  for (var vertexIndex = 0; vertexIndex < ccube.geometry.vertices.length; vertexIndex++)
-  {   
-    var directionVector = new THREE.Vector3( 0, -1, 0 );
-    var ray = new THREE.Raycaster( selection.position, directionVector.normalize() );
-    var collisionResults = ray.intersectObjects( collidableMeshList );
-    if ( collisionResults.length > 0 && collidableMeshList.distance < directionVector.length() ) 
-      console.log('');
-      hit(collisionResults);
-  } 
-
 }; //animate loop
 
 
@@ -235,8 +224,6 @@ function walls() {
 
 // HIT function
 function hit (v) {
-  console.log(v);
-
 if ( v.length > 0) {
   var num = Math.floor(Math.random()*xwall) + 1;
   num *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
@@ -277,44 +264,27 @@ function playerupdate() {
         selection.translateZ( -xmove );
     }
     if (keyboard.isDown(keyboard.DOWN))   {
-        // selection.position.z += xmove; 
         selection.translateZ( xmove );
     }
+// lerp cursor
 cursor.position.x += (selection.position.x - cursor.position.x)*0.9;
 cursor.position.z += (selection.position.z - cursor.position.z)*0.9;
-// // cursor.position.x = xdif;
-// // cursor.position.z = ydif;
+// use distance for walk
 var distance = selection.position.distanceTo( cursor.position );
 xval = (distance-0.5)*100;           
-        // xval = ydif/20;           
+ 
+// //hit
+  for (var vertexIndex = 0; vertexIndex < ccube.geometry.vertices.length; vertexIndex++)
+  {   
+    var directionVector = new THREE.Vector3( 0, -1, 0 );
+    var ray = new THREE.Raycaster( selection.position, directionVector.normalize() );
+    var collisionResults = ray.intersectObjects( collidableMeshList );
+    if ( collisionResults.length > 0 && collidableMeshList.distance < directionVector.length() ) 
+      console.log('');
+      hit(collisionResults);
+  } 
+}// player update
 
-// xu = 512-Math.floor( hero.position.z*1.45);
-// xv = 256-Math.floor( hero.position.x*1.45);
-
-// move map
-// groundplane.geometry.applyMatrix( new THREE.Matrix4().makeTranslation( diffz/70, diffx/70, 0 ) );
-//
-}// move player
-
-
-// function movehero(x, y) {
-//     hero.position.x = x;
-//     hero.position.z = y;
-//     xval = 0;
-//     // tween spider with speed based on distance
-//     var distance = spider.position.distanceTo( hero.position );
-//     // rotate spider to face pointer
-//     if (distance>1) { spider.lookAt(hero.position.x, 0.5, hero.position.z); }
-//     // tween spider to pointer position
-//     new TWEEN.Tween( spider.position ).to( {x:x, y:spider.position.y, z:y}, 500+(distance*50) )
-//         .onComplete(function() {
-//     // spider.rotation.set(0,0,0);
-//         xval = 0;
-//   }).onUpdate(function() {
-//     if (distance>0.5) {xval = distance/2000;}
-//   }).start();
-
-// }
 
 </script>
 </body>
