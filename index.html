@@ -15,16 +15,7 @@
 </style>
 </head>
 <body>
-  <div id="hud">
-    <p>click on web<br> to control spider</p>
-  <button id="low" onclick="golow()" >low</button>
-  <button id="high" onclick="gohigh()">high</button>
-</div>
     
-    <button id="">click me</button>
-    <span id="green">y</span>
-    <span id="blue">x</span>
-
 <script src="js/three.min.js"></script>
 <script src="js/GLTFLoader.js"></script>
 <script src="js/OrbitControls.min.js"></script>
@@ -283,11 +274,11 @@ if ( v.length > 0) {
     v[0].object.scale.y = 1;
             if (v[0].object.name == 'blue') {bpoints+=1; 
           // console.log('b:'+ Math.round(bpoints));
-        document.getElementById('blue').innerHTML = 'x:'+ Math.round(bpoints);
+        // document.getElementById('blue').innerHTML = 'x:'+ Math.round(bpoints);
         }
         if (v[0].object.name == 'green') {gpoints+=1; 
           // console.log('g:'+ Math.round(gpoints));
-        document.getElementById('green').innerHTML = 'y:'+ Math.round(gpoints);
+        // document.getElementById('green').innerHTML = 'y:'+ Math.round(gpoints);
         }
     }, 100);
 }//if
