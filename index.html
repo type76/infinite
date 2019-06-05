@@ -27,41 +27,18 @@
 	<script type="text/javascript">
 	var bpoints = 0;
 	var gpoints = 0;
-	var stopwarp = true;
   var xmove = 0.05;
   var keyboard;
 
-var collidableMeshList = [];
-var chk = document.getElementById('chk');
-var mixer;
-var prevTime = Date.now();
-var xval = 0.000;
-var collidableMeshList = [];
-var bpoints = 0;
-var gpoints = 0;
-var xwall = 5;
-var xdif = 0;
-var ydif = 0;
-// function movehero(x, y) {
-// 		hero.position.x = x;
-// 		hero.position.z = y;
-//     xval = 0;
-//     // tween spider with speed based on distance
-//     var distance = spider.position.distanceTo( hero.position );
-//     // rotate spider to face pointer
-//     if (distance>1) { spider.lookAt(hero.position.x, 0.5, hero.position.z); }
-//     // tween spider to pointer position
-//     new TWEEN.Tween( spider.position ).to( {x:x, y:spider.position.y, z:y}, 500+(distance*50) )
-//         .onComplete(function() {
-//     // spider.rotation.set(0,0,0);
-//         xval = 0;
-//   }).onUpdate(function() {
-//     if (distance>0.5) {xval = distance/2000;}
-//   }).start();
-
-// }
-
-
+  var collidableMeshList = [];
+  var chk = document.getElementById('chk');
+  var mixer;
+  var prevTime = Date.now();
+  var xval = 0.000;
+  var collidableMeshList = [];
+  var xwall = 5;
+  var xdif = 0;
+  var ydif = 0;
 
 // KEYS
 keyboard = {
@@ -186,9 +163,9 @@ scene.add( web );
 // cube pointer
 var bgeometry = new THREE.BoxGeometry( 0.5, 0.5, 0.5 );
 var mmaterial = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
-var cube = new THREE.Mesh( bgeometry, mmaterial );
-selection.add( cube );
-cube.visible = false;
+ccube = new THREE.Mesh( bgeometry, mmaterial );
+ccube.position.set(0,-0.5,0);
+selection.add( ccube );
 
 
 var animate = function () {
@@ -204,15 +181,15 @@ var animate = function () {
   renderer.render(scene, camera);
   playerupdate();
 // //hit
-//   for (var vertexIndex = 0; vertexIndex < cube.geometry.vertices.length; vertexIndex++)
-//   {   
-//     var directionVector = new THREE.Vector3( 0, -1, 0 );
-//     var ray = new THREE.Raycaster( spider.position, directionVector.normalize() );
-//     var collisionResults = ray.intersectObjects( collidableMeshList );
-//     if ( collisionResults.length > 0 && collidableMeshList.distance < directionVector.length() ) 
-//       console.log('');
-//       hit(collisionResults);
-//   } 
+  for (var vertexIndex = 0; vertexIndex < ccube.geometry.vertices.length; vertexIndex++)
+  {   
+    var directionVector = new THREE.Vector3( 0, -1, 0 );
+    var ray = new THREE.Raycaster( ccube.position, directionVector.normalize() );
+    var collisionResults = ray.intersectObjects( collidableMeshList );
+    if ( collisionResults.length > 0 && collidableMeshList.distance < directionVector.length() ) 
+      console.log('');
+      hit(collisionResults);
+  } 
 
 }; //animate loop
 
@@ -257,6 +234,8 @@ function walls() {
 
 // HIT function
 function hit (v) {
+  console.log(v);
+
 if ( v.length > 0) {
   var num = Math.floor(Math.random()*xwall) + 1;
   num *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
@@ -288,27 +267,24 @@ if ( v.length > 0) {
 // player movement update
 function playerupdate() {
     if (keyboard.isDown(keyboard.LEFT))   {
-        // cursor.position.x -= xmove; 
         selection.rotation.y += xmove; 
     }
     if (keyboard.isDown(keyboard.RIGHT))   {
-        // cursor.position.x += xmove; 
        selection.rotation.y -= xmove; 
           }
     if (keyboard.isDown(keyboard.UP))   {
-        // var distance = -xmove; 
         selection.translateZ( -xmove );
-
     }
     if (keyboard.isDown(keyboard.DOWN))   {
         // selection.position.z += xmove; 
         selection.translateZ( xmove );
     }
-xdif = (selection.position.x - cursor.position.x)*0.2;
-ydif = (cursor.position.z - selection.position.z)*0.2;
-cursor.position.x += xdif;
-cursor.position.z += ydif;
-        xval = xdif/20;           
+cursor.position.x += (selection.position.x - cursor.position.x)*0.9;
+cursor.position.z += (selection.position.z - cursor.position.z)*0.9;
+// // cursor.position.x = xdif;
+// // cursor.position.z = ydif;
+var distance = selection.position.distanceTo( cursor.position );
+xval = (distance-0.5)*100;           
         // xval = ydif/20;           
 
 // xu = 512-Math.floor( hero.position.z*1.45);
