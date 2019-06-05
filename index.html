@@ -288,23 +288,35 @@ if ( v.length > 0) {
 // player movement update
 function playerupdate() {
     if (keyboard.isDown(keyboard.LEFT))   {
+        // cursor.position.x -= xmove; 
         selection.rotation.y += xmove; 
     }
     if (keyboard.isDown(keyboard.RIGHT))   {
-        selection.rotation.y -= xmove; 
-    }
+        // cursor.position.x += xmove; 
+       selection.rotation.y -= xmove; 
+          }
     if (keyboard.isDown(keyboard.UP))   {
-        cursor.position.z -= xmove; 
+        // var distance = -xmove; 
+        selection.translateZ( -xmove );
+
     }
     if (keyboard.isDown(keyboard.DOWN))   {
-        cursor.position.z += xmove; 
+        // selection.position.z += xmove; 
+        selection.translateZ( xmove );
     }
-xdif = (cursor.position.x - selection.position.x)*0.2;
+xdif = (selection.position.x - cursor.position.x)*0.2;
 ydif = (cursor.position.z - selection.position.z)*0.2;
-selection.position.x += xdif;
-selection.position.z += ydif;
+cursor.position.x += xdif;
+cursor.position.z += ydif;
         xval = xdif/20;           
-        xval = ydif/20;           
+        // xval = ydif/20;           
+
+// xu = 512-Math.floor( hero.position.z*1.45);
+// xv = 256-Math.floor( hero.position.x*1.45);
+
+// move map
+// groundplane.geometry.applyMatrix( new THREE.Matrix4().makeTranslation( diffz/70, diffx/70, 0 ) );
+//
 }// move player
 
 
