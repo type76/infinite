@@ -69,7 +69,7 @@ var controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.maxPolarAngle = Math.PI*0.45;
 controls.enableDamping = true;
 controls.dampingFactor = 0.4;
-controls.maxDistance = 10;
+controls.maxDistance = 14;
 controls.minDistance = 2;
 controls.enablePan = false;
 
@@ -78,22 +78,25 @@ cursor = new THREE.Group();
 scene.add( cursor );
 // selection group
 selection = new THREE.Group();
-selection.position.set( 0, 0.5,  0);
+selection.position.set( 0, 0.5, 0.9);
 scene.add( selection );
 
 // camera
-camera.position.y = 8;
+camera.position.y = 14;
 
-//raycaster
-var raycaster = new THREE.Raycaster();
-var mouse = new THREE.Vector2();
-var isDragging = false;
+// ground plane
+var pltexture = new THREE.TextureLoader().load( "img/ol.png" );
+pltexture.magFilter = THREE.NearestFilter;
+pltexture.minFilter = THREE.LinearMipMapLinearFilter;
 
-//transparent raycasting plane
 var geometry = new THREE.PlaneBufferGeometry( 10, 10, 10, 10 );
 var material = new THREE.MeshBasicMaterial( { 
-  wireframe:true,color: 0x333333,transparent:true,opacity:0
+  color: 0xffffff,
+  map:pltexture,
+  transparent:true
+  // ,opacity:0.8
 } );
+
 var plane = new THREE.Mesh( geometry, material );
 plane.name = 'plane';
 plane.rotation.set(-Math.PI/2,0,0);
@@ -135,16 +138,16 @@ loader.load("spiderwalk2.glb", gltf => {
 
 });
 
-// web
-var radius = 5;
-var radials = 13;
-var circles = 3;
-var divisions = 13;
+// // web
+// var radius = 5;
+// var radials = 13;
+// var circles = 3;
+// var divisions = 13;
 
-var web = new THREE.PolarGridHelper( radius, radials, circles, divisions );
-web.rotation.y = -Math.PI/2;
-web.position.y = 0.01;
-scene.add( web );
+// var web = new THREE.PolarGridHelper( radius, radials, circles, divisions );
+// web.rotation.y = -Math.PI/2;
+// web.position.y = 0.01;
+// scene.add( web );
 
 // cube pointer
 var bgeometry = new THREE.BoxGeometry( 0.5, 0.5, 0.5 );
@@ -155,12 +158,12 @@ cursor.add( ccube );
 ccube.visible = false;
 
 
+
 var animate = function () {
   if ( mixer ) {
     var time = Date.now();
     mixer.update( ( time - prevTime ) * xval );
     prevTime = time;
-    camera.lookAt(0,0,0)
   }
 
   TWEEN.update();
@@ -169,7 +172,7 @@ var animate = function () {
   playerupdate();
 camera.position.x = cursor.position.x;
 camera.position.z = cursor.position.z;
-camera.lookAt(cursor.position)
+// camera.lookAt(cursor.position)
 }; //animate loop
 
 
@@ -266,15 +269,15 @@ function playerupdate() {
     selection.translateZ( xmove );
   }
 // lerp position cursor
-cursor.position.x += (selection.position.x - cursor.position.x)*0.5;
-cursor.position.z += (selection.position.z - cursor.position.z)*0.5;
+cursor.position.x += (selection.position.x - cursor.position.x)*0.1;
+cursor.position.z += (selection.position.z - cursor.position.z)*0.1;
 // lerp rotate cursor
-cursor.rotation.y += (selection.rotation.y - cursor.rotation.y)*0.5;
+cursor.rotation.y += (selection.rotation.y - cursor.rotation.y)*0.9;
 // use distance/rotation for walk
 var rotdiff = cursor.rotation.y-selection.rotation.y;
 var invrotdiff = selection.rotation.y-cursor.rotation.y;
 var distance = selection.position.distanceTo( cursor.position );
-xval = (distance-0.5);           
+xval = (distance-0.5)/50;           
 // //hit
 for (var vertexIndex = 0; vertexIndex < ccube.geometry.vertices.length; vertexIndex++)
 {   
