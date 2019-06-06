@@ -172,10 +172,8 @@ loader.load("models/frame.gltf", gltf => {
   gltf.scene.children[0].castShadow = true;
   gltf.scene.position.y = -0.5;
   gltf.scene.scale.set(0.6, 0.6, 0.6);     
-
-  gltf.scene.name = 'scene';
+  gltf.scene.name = 'frame';
   scene.add(gltf.scene);
-
 });
 
 
@@ -215,6 +213,14 @@ var animate = function () {
 // camera.position.x = cursor.position.x;
 // camera.position.z = cursor.position.z;
 
+  var logs = scene.getObjectByProperty( 'name', 'frame', true );
+  if (logs) {
+    logs.children[0].children[0].rotation.y += 0.01;
+    logs.children[0].children[1].rotation.y += 0.01;
+    logs.children[0].children[2].rotation.x += 0.01;
+    logs.children[0].children[3].rotation.x += 0.01;
+  }
+  
 // camera.lookAt(cursor.position)
 }; //animate loop
 
