@@ -1,0 +1,103 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>2D in 3D</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <style>
+    html, body {background: #333;}
+    body {display: block; margin: 0; padding: 0; overflow: hidden;}
+    </style>
+</head>
+<body class="outside">
+
+  <canvas id="hitcanvas" width="1024" height="512" ></canvas>
+
+
+    <script>
+var hitcanvas = document.getElementById("hitcanvas");
+var ctx = hitcanvas.getContext("2d");
+var cursor = {x:0, y:0}
+
+function changeCanvas() {
+ctx.clearRect(0, 0, 1024, 512);
+ctx.fillStyle = "white";
+ctx.fillRect(cursor.x, cursor.y, 4, 4);
+}
+
+var xmove = 5;
+var ymove = 5;
+
+function init() {
+   
+
+// KEYS
+keyboard = {
+    _pressed: {},
+
+    LEFT: 37,
+    UP: 38,
+    RIGHT: 39,
+    DOWN: 40,
+
+isDown: function(keyCode) {
+    return this._pressed[keyCode];
+},
+
+onKeydown: function(event) {
+    this._pressed[event.keyCode] = true;
+},
+
+onKeyup: function(event) {
+    delete this._pressed[event.keyCode];
+}
+};
+//
+
+window.addEventListener('keyup', function(event) { keyboard.onKeyup(event); }, false);
+window.addEventListener('keydown', function(event) { keyboard.onKeydown(event); }, false);
+
+}// init
+
+
+
+
+
+// player movement update
+function playerupdate() {
+    if (keyboard.isDown(keyboard.LEFT))   {
+        cursor.x -= xmove;            
+    }
+    if (keyboard.isDown(keyboard.RIGHT))   {
+        cursor.x += xmove; 
+    }
+    if (keyboard.isDown(keyboard.UP))   {
+        cursor.y -= ymove; 
+    }
+    if (keyboard.isDown(keyboard.DOWN))   {
+        cursor.y += ymove; 
+    }
+}// move player
+
+function getCenterPoint(mesh) {
+    var geometry = mesh.geometry;
+    geometry.computeBoundingBox();   
+    center = geometry.boundingBox.getCenter();
+    mesh.localToWorld( center );
+    return center;
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    playerupdate();
+    changeCanvas();
+}
+
+init();
+animate();
+
+
+</script>
+</body>
+</html>
