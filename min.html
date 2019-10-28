@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, user-scalable=no" />
+	<title>web</title>
+	<style type="text/css">
+	body, input {margin: 0; background: #111; color: #fff; font-family: monospace; overflow: hidden;
+    transition: all 0.2s ease-in-out;}
+    button {border: none; outline: none; background: transparent; color: #fff;}
+    button:hover {color: red;}
+  .over0 {background: #000;}
+  .sub0 {background: maroon;}
+  #green, #blue {position: absolute; bottom: 0; padding: 1em; z-index: 3;}
+  #blue {left:0; color: yellow;}
+  #green {left:0; bottom: 40px;}
+#interface {position: absolute;
+top: 20px; right: 20px;}
+
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.5);
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: red;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+
+#switchValue:checked + .slider {
+  background-color: rgba(60,60,60,0.5);
+}
+
+#switchValue:checked + .slider.round:before {
+    background-color: #333 !important;
+}
+
+#switchValue:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+    background-color: #eee;
+}
+      #xvar {
+        padding: 12px;
+        position: absolute; top: 0; left: 0;
+        z-index: 3;
+      }
+</style>
+</head>
+<body>
+<div id="interface">
+<label class="switch">
+  <input id="switchValue" type="checkbox" checked oninput="invert()">
+  <span class="slider round"></span>
+</label>
+</div><!-- interface -->
+
+        <canvas id="bumpcanvas" width="128" height="128" style="width:128px; height: 128px; position: absolute; top:10px; left:10px; display: none; z-index: 4; background: #fff; border: #333 1px solid;"></canvas>
+
+
+<span id="green">green:</span>
+<button id="blue" onclick="shoot(bpoints);">points</button>
+
+<script src="three.min.js"></script>
+<script src="GLTFLoader.js"></script>
+<script src="OrbitControls.min.js"></script>
+<script src="tween.js"></script>
+
+
+	<script type="text/javascript">
+  var fraction = 0;
+  var xu = 64;
+  var xv =64;
+  var npcx = 64;
+  var npcz =64;
+  var data = 0;
+  var npcdata = 0;
+  var bumpcanvas = document.getElementById('bumpcanvas'),
+  bumpctx = bumpcanvas.getContext('2d');
+  bumpimg = new Image();
+  bumpimg.src = 'bump2.png';
+
+  function changeCanvas() {
+// bg base image
+  bumpctx.drawImage(bumpimg, 0, 0, 128, 128);
+// get data for spider pos
+  data = bumpctx.getImageData(xv, xu, 128, 128);
+// hit spot
+  // bumpctx.fillStyle = "blue";
+  // bumpctx.fillRect(xu, xv, 2, 2);
+// npc data for y pos
+  npcdata = bumpctx.getImageData(npcx, npcz, 128, 128);
+  // bumpctx.fillStyle = "red";
+  // bumpctx.fillRect(npcx, npcz, 2, 2);
+  }
+
+
+	var bpoints = 0;
+	var gpoints = 0;
+	var stopwarp = true;
+  var now = 0;
+
+var collidableMeshList = [];
+var chk = document.getElementById('chk');
+var mixer;
+var prevTime = Date.now();
+var xval = 0.000;
+var bpoints = 0;
+var gpoints = 0;
+var xnpc = 2;
+
+// update touch
+	var updateTouchCoordinates = function(evt) {
+	stopwarp = false; 
+	mouse.x = ( evt.touches[0].pageX / window.innerWidth ) * 2 - 1;
+	mouse.y = - ( evt.touches[0].pageY / window.innerHeight ) * 2 + 1;
+	raycaster.setFromCamera( mouse, camera );
+	var intersects = raycaster.intersectObject( plane );
+	if (intersects.length > 0) { 
+		movehero(intersects[ 0 ].point.x, intersects[ 0 ].point.z);
+		 }
+};
+
+
+// update mouse
+var updateMouseCoordinates = function(evt) {
+	evt.preventDefault();
+	mouse.x = ( evt.clientX / window.innerWidth ) * 2 - 1;
+	mouse.y = - ( evt.clientY / window.innerHeight ) * 2 + 1;
+	raycaster.setFromCamera( mouse, camera );
+	var intersects = raycaster.intersectObject( plane );
+	if (intersects.length > 0) { 
+		movehero(Math.round(intersects[ 0 ].point.x), Math.round(intersects[ 0 ].point.z));
+		 }
+};
+
+
+function movehero(x, z) {
+    var posspi = scene.getObjectByProperty( 'name', 'spscene', true ); 
+
+		hero.position.x = x;
+		hero.position.z = z;
+    xval = 0;
+    // tween spider with speed based on distance
+    var distance = spider.position.distanceTo( hero.position );
+    // rotate spider to face pointer
+    if (distance>1) { 
+      spider.lookAt(hero.position.x, 0.5, hero.position.z); 
+  } 
+
+    // tween spider to pointer position
+    new TWEEN.Tween( spider.position ).to( {x:x, y:spider.position.y, z:z}, 500+(distance*50) )
+        .onComplete(function() {
+        xval = 0;
+  }).onUpdate(function() {
+    if (distance>0.1) {xval = distance/2000;
+  }
+  xu = 64+(spider.position.x*12);
+  xv = 64+(spider.position.z*12);
+
+  // spider y position from grey level
+  var xbh = -parseFloat(data.data[0]).toFixed(2)/180-0.5;
+  posspi.position.y = xbh;
+  }).start();
+
+}
+
+
+window.addEventListener('touchstart', updateTouchCoordinates);
+window.addEventListener('touchmove', updateTouchCoordinates);
+// window.addEventListener( 'mouseup', updateMouseCoordinates, false );
+
+
+// THREE.JS
+var scene = new THREE.Scene();
+var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
+var renderer = new THREE.WebGLRenderer( { alpha: true, antialias: true } );
+renderer.setSize( window.innerWidth, window.innerHeight );
+document.body.appendChild( renderer.domElement );
+
+
+// polar grid
+// var radius = 12;
+// var radials = 2;
+// var circles = 2;
+// var divisions = 64;
+
+// var helper = new THREE.PolarGridHelper( radius, radials, circles, divisions );
+// helper.position.y = -0.5;
+// scene.add( helper );
+
+  // groups
+  linegroup = new THREE.Group();
+  linegroup.scale.set(0.5,0.5,0.5)
+  linegroup.position.set(0,-1,6)
+  scene.add( linegroup );
+
+
+// circle
+var segmentCount = 32,
+    radius = 0.5,
+    geometry = new THREE.Geometry(),
+    material = new THREE.LineBasicMaterial({ color: 0xFFFFFF });
+
+for (var i = 0; i <= segmentCount; i++) {
+    var theta = (i / segmentCount) * Math.PI * 2;
+    geometry.vertices.push(
+        new THREE.Vector3(
+            Math.cos(theta) * radius,
+            Math.sin(theta) * radius,
+            0));            
+}
+
+disc = new THREE.Line(geometry, material);
+disc.rotation.x = -Math.PI/2;
+disc.position.z = 7;
+scene.add(disc);
+
+
+//line
+var material = new THREE.LineBasicMaterial( { color: 0xffffff } );
+var geometry = new THREE.Geometry();
+geometry.vertices.push(new THREE.Vector3( 0, 0, 7) );
+geometry.vertices.push(new THREE.Vector3( 0, 0, 4) );
+// 1
+line1 = new THREE.Line( geometry, material );
+scene.add( line1 );
+
+
+// controls
+var controls = new THREE.OrbitControls(camera, renderer.domElement);
+// controls.maxPolarAngle = Math.PI*0.45;
+controls.enableDamping = true;
+controls.dampingFactor = 0.4;
+controls.maxDistance = 20;
+controls.minDistance = 2;
+controls.enablePan = false;
+
+// camera
+camera.position.x = 0.1;
+camera.position.y = 12;
+camera.position.z = 0;
+camera.lookAt(0,0,0)
+
+// groups
+main = new THREE.Group();
+scene.add( main );
+//
+bggroup = new THREE.Group();
+scene.add( bggroup );
+//
+groundplane = new THREE.Group();
+groundplane.position.y = 0;
+main.add( groundplane );
+//
+hero = new THREE.Group();
+main.add( hero );
+//
+spider = new THREE.Group();
+spider.position.set( 0, 0.5,  0);
+spider.rotation.set( 0, 0,  0);
+main.add( spider );
+//
+bggrouperimeter = new THREE.Group();
+bggroup.add( bggrouperimeter );
+
+
+// // grid
+// var size = 11;
+// var divisions = 1;
+// gridHelper = new THREE.GridHelper(size, divisions);
+// main.add(gridHelper)
+
+//raycaster
+var raycaster = new THREE.Raycaster();
+var mouse = new THREE.Vector2();
+var isDragging = false;
+
+// raycasting plane / web texture
+
+var geometry = new THREE.PlaneBufferGeometry( 30, 30, 1 );
+var material = new THREE.MeshBasicMaterial( { 
+color:0xffffff,
+side: THREE.DoubleSide
+} );
+
+var plane = new THREE.Mesh( geometry, material );
+plane.name = 'plane';
+plane.rotation.set(-Math.PI/2,0,0);
+plane.position.set(0,-0.3,0);
+plane.name = 'plane';
+groundplane.add( plane );
+plane.material.colorWrite = false;
+plane.material.depthWrite = false;
+plane.renderOrder = 1;
+
+
+// web plane
+var bumptexture = new THREE.TextureLoader().load( 'bump2.png' );
+var webtex = new THREE.TextureLoader().load( 'web5.png' );
+webtex.magFilter = THREE.NearestFilter;
+webtex.minFilter = THREE.LinearMipMapLinearFilter;
+var webgeometry = new THREE.PlaneBufferGeometry( 11, 11, 100, 100 );
+var webmaterial = new THREE.MeshStandardMaterial( { 
+transparent:true,
+map: webtex,
+side: THREE.DoubleSide,
+displacementMap: bumptexture,
+displacementScale: -1.4
+} );
+
+var webplane = new THREE.Mesh( webgeometry, webmaterial );
+webplane.name = 'webplane';
+webplane.rotation.set(-Math.PI/2,0,0);
+// webplane.position.set(0,-1.66,0);
+webplane.name = 'webplane';
+main.add( webplane );
+
+
+// disc
+var curve = new THREE.EllipseCurve(
+  0,  0,            // ax, aY
+  0.5, 0.5,           // xRadius, yRadius
+  0,  2 * Math.PI,  // aStartAngle, aEndAngle
+  false,            // aClockwise
+  0                 // aRotation
+);
+
+var points = curve.getPoints( 60 );
+var dgeometry = new THREE.BufferGeometry().setFromPoints( points );
+var dmaterial = new THREE.LineBasicMaterial( { color : 0xcccccc
+ } );
+
+var flashdot = new THREE.Line( dgeometry, dmaterial );
+flashdot.rotation.x = Math.PI/2;
+flashdot.scale.set(0.001, 0.001, 0.001);
+main.add(flashdot);
+flashdot.visibile = false;
+
+
+// /// flash dot
+// var geometry = new THREE.CircleBufferGeometry( 0.5, 32 );
+
+// var material = new THREE.MeshBasicMaterial( {color: 0xffffff, side  : THREE.DoubleSide, transparent:true, opacity:0.2
+//  } );
+// flashdot = new THREE.Mesh( geometry, material );
+// flashdot.rotation.set (-Math.PI/2,0,0);
+// main.add( flashdot );
+// flashdot.visibile = false;
+
+
+/// cursor dot
+var geometry = new THREE.CircleBufferGeometry( 0.1, 32 );
+
+var material = new THREE.MeshBasicMaterial( {color: 0xffffff } );
+flag = new THREE.Mesh( geometry, material );
+flag.rotation.set (-Math.PI/2,0,Math.PI/2);
+main.add( flag );
+// flag.visibile = false;
+
+
+// cursor light
+var pointLight = new THREE.PointLight( 0xffffff, 10,20 );
+pointLight.position.set( 0, 6, 0 );
+flag.add( pointLight );
+
+
+// lights
+var alight = new THREE.AmbientLight( 0xffffff );
+alight.intensity = 0.1;
+main.add( alight );
+
+var light = new THREE.PointLight( 0xffffff, 1, 20 );
+light.position.set( 0, 10, 0 );
+main.add( light );
+
+
+// fly object
+var geometry = new THREE.SphereBufferGeometry( 0.2, 32, 32 );
+var material = new THREE.MeshBasicMaterial( {color: 0xffff00} );
+sphere = new THREE.Mesh( geometry, material );
+sphere.visibile=false;
+
+// spider     
+var loader = new THREE.GLTFLoader();
+    loader.load("spiderwalk2.glb", gltf => {
+     
+      gltf.scene.children[0].material = new THREE.MeshLambertMaterial( {
+      color: 0xff0000,
+      side  : THREE.DoubleSide,
+      morphTargets: true
+      } ) ;
+
+        mixer = new THREE.AnimationMixer(gltf.scene);
+
+        for (const anim of gltf.animations) {
+            mixer.clipAction(anim).play();
+        }
+
+        gltf.scene.scale.set(0.005, 0.005, 0.005);     
+        gltf.scene.position.y = -1.3;
+        gltf.scene.name = 'spscene';
+        spider.add(gltf.scene);
+
+    });
+
+// // hickman
+// var hicktexture = new THREE.TextureLoader().load( 'hickman.png' );
+// hicktexture.magFilter = THREE.NearestFilter;
+// hicktexture.minFilter = THREE.LinearMipMapLinearFilter;
+// var geometry = new THREE.PlaneBufferGeometry( 25.5, 25.5, 1 );
+// var hickmaterial = new THREE.MeshBasicMaterial( {transparent:true, side: THREE.DoubleSide, map:hicktexture, opacity:0.1} );
+// var plane = new THREE.Mesh( geometry, hickmaterial );
+// plane.rotation.x = -Math.PI/2;
+// plane.position.y = -1;
+// scene.add( plane );
+
+
+// spider hitbox
+var bgeometry = new THREE.BoxGeometry( 0.5, 0.5, 0.5 );
+var mmaterial = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
+cube = new THREE.Mesh( bgeometry, mmaterial );
+spider.add( cube );
+cube.material.colorWrite = false;
+cube.material.depthWrite = false;
+
+
+// BGdisc
+var curve = new THREE.EllipseCurve(
+  0,  0,            // ax, aY
+  10, 10,           // xRadius, yRadius
+  0,  2 * Math.PI,  // aStartAngle, aEndAngle
+  false,            // aClockwise
+  0                 // aRotation
+);
+
+var points = curve.getPoints( 120 );
+var dgeometry = new THREE.BufferGeometry().setFromPoints( points );
+dmaterial = new THREE.LineBasicMaterial( { color : 0x333333
+ } );
+
+var bgdisc = new THREE.Line( dgeometry, dmaterial );
+bgdisc.rotation.x = Math.PI/2;
+// bgdisc.scale.set(0.001, 0.001, 0.001);
+main.add(bgdisc);
+
+// var radius = 12;
+// var radials = 4;
+// var circles = 2;
+// var divisions = 64;
+
+// var helper = new THREE.PolarGridHelper( radius, radials, circles, divisions );
+// helper.position.y = -0.5;
+// scene.add( helper );
+
+// rocks
+// makerocks();
+// function makerocks() {
+// for (var i = bggroup.children.length - 1; i >= 0; i--) {
+//     bggroup.remove(bggroup.children[i]);
+// }
+// for ( var i = 0; i < 10; i ++ ) {
+// var material = new THREE.MeshBasicMaterial( {color: 0xff0000} );
+// var geometry = new THREE.SphereGeometry( 0.1, 2, 1, 0, 3 );
+// var mesh = new THREE.Mesh( geometry, material );
+//           mesh.rotation.x = -Math.PI/2;
+//           mesh.rotation.z = Math.PI*Math.random();
+//           var sc = Math.random()*3;
+//           mesh.scale.set(sc, sc, sc);
+//           mesh.position.x = ( Math.random() - 0.5 ) * 30;
+//           mesh.position.z = ( Math.random() - 0.5 ) * 30;
+
+//           // leave hole
+//           if ( Math.abs( mesh.position.x ) < 12 && Math.abs( mesh.position.z ) < 12 ) continue;
+
+//           mesh.updateMatrix();
+//           mesh.matrixAutoUpdate = false;
+//           bggroup.add( mesh );
+
+//         }
+
+// }// makerocks
+
+
+
+function underhorizon() {
+document.body.classList="sub0";
+var posspi = scene.getObjectByProperty( 'name', 'spscene', true ); 
+posspi.children[0].material.color = {r:0,g:0,b:0};
+posspi.children[0].material.needsUpdate = true;
+dmaterial.color = {r:1,g:0,b:0};
+}
+
+function overhorizon() {
+    document.body.classList="over0";
+var posspi = scene.getObjectByProperty( 'name', 'spscene', true ); 
+posspi.children[0].material.color = {r:1,g:0,b:0};
+posspi.children[0].material.needsUpdate = true;
+dmaterial.color = {r:0.2,g:0.2,b:0.2};
+}
+
+// animate
+var animate = function () {
+  if ( mixer ) {
+    // bgmove();
+  changeCanvas();
+  var time = Date.now();
+  mixer.update( ( time - prevTime ) * xval );
+  prevTime = time;
+  camera.lookAt(0,0,0)
+
+  // if under horizon
+  if (camera.position.y<0) {
+underhorizon();
+  } else {
+overhorizon();
+bggrouperimeter.rotation.y += 0.0005;
+// document.getElementById('green').innerHTML = 100*bggrouperimeter.rotation.y;
+  }
+}
+
+	TWEEN.update();
+    requestAnimationFrame( animate );
+  renderer.render(scene, camera);
+//hit
+  for (var vertexIndex = 0; vertexIndex < cube.geometry.vertices.length; vertexIndex++)
+  {   
+    var directionVector = new THREE.Vector3( 0, -1, 0 );
+    var ray = new THREE.Raycaster( spider.position, directionVector.normalize() );
+    var collisionResults = ray.intersectObjects( collidableMeshList );
+
+//  if ( collisionResults.length >0){
+//   console.log(collisionResults);
+// }
+
+    if ( collisionResults.length > 0 && collidableMeshList.distance < directionVector.length() ) 
+      console.log('');
+      hit(collisionResults);
+  } 
+
+}; //animate loop
+
+
+// resize
+window.addEventListener('resize', function() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+}, false);
+
+
+
+
+
+
+
+
+
+function colliders() {
+  var npcGeometry = new THREE.CubeGeometry( 0.75, 0.75, 0.75 );
+ xmat = new THREE.MeshBasicMaterial( {color: 0xffffff
+  ,transparent:true,opacity:0.3
+} );
+var npcmat = new THREE.MeshBasicMaterial( );
+// NPC1
+  var npc = new THREE.Mesh(npcGeometry, npcmat);
+  npc.position.set(0, 0, 7);
+  npc.name = 'blue';
+  bggroup.add(npc);
+  collidableMeshList.push(npc);
+  npc.material.colorWrite = false;
+  npc.material.depthWrite = false;
+    // add sphere as child
+    npc.add( sphere );
+
+flashdot.position.x = sphere.position.x;
+flashdot.position.y = sphere.position.y;
+flashdot.position.z = sphere.position.z;
+
+// NPC2
+  var npc2 = new THREE.Mesh(npcGeometry, xmat);
+  npc2.position.set(0, 0, 10);
+  npc2.name = 'green';
+  bggrouperimeter.add(npc2);
+  collidableMeshList.push(npc2);
+
+// NPC3
+  var npc3 = new THREE.Mesh(npcGeometry, npcmat);
+  npc3.position.set(0, 0, 7);
+  npc3.name = 'red';
+  bggroup.add(npc3);
+  collidableMeshList.push(npc3);
+
+}
+
+
+
+// HIT function
+function hit (v) {
+if ( v.length > 0) {
+  var num = Math.floor(Math.random()*xnpc) + 1;
+  num *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
+  var num2 = Math.floor(Math.random()*xnpc) + 1;
+  num2 *= Math.floor(Math.random()*2) == 1 ? 1 : -1;
+
+    // console.log('hit')
+      sphere.visibile = false;
+flash();
+// makerocks();
+
+
+    sphere.scale.set(2,2,2)
+
+
+    setTimeout(function() {
+        if (v[0].object.name == 'blue') {
+              bpoints+=0.125; 
+              document.getElementById('blue').innerHTML = Math.round(bpoints);
+                npcx = 64+(num*12);
+                npcz = 64+(num2*12);
+              v[0].object.position.x = num;
+              v[0].object.position.z = num2;
+              v[0].object.position.y = -parseFloat(npcdata.data[0]).toFixed(2)/180;
+        }
+        if (v[0].object.name == 'red') {
+          gpoints+=0.125; 
+          document.getElementById('green').innerHTML = Math.round(gpoints);
+          xmat.opacity = 0.9;
+          line1.scale.z = -gpoints/1000;
+        }
+        sphere.visibile = true;
+    }, 10);
+    
+
+    setTimeout(function() {
+      new TWEEN.Tween( sphere.scale ).to( {x:1, y:1, z:1}, 100 ).start();
+      xmat.opacity = 0.3;
+    }, 90);
+
+}//if
+}// fn hit
+
+// flash
+function flash() {
+  flashdot.visibile = true;
+  flashdot.position.x = collidableMeshList[0].position.x;
+  flashdot.position.y = collidableMeshList[0].position.y;
+  flashdot.position.z = collidableMeshList[0].position.z;
+  new TWEEN.Tween( flashdot.scale ).to( {x:3, y:3, z:3}, 100 ).onComplete(function() {
+new TWEEN.Tween( flashdot.scale ).to( {x:0.001, y:0.001, z:0.001}, 100 ).start();
+  }).start();
+
+    setTimeout(function() {
+        flashdot.visibile = false;
+     }, 220);
+}
+
+
+//golow
+function golow() {
+new TWEEN.Tween( camera.position ).to( {x:6, y:2, z:0}, 600 ).start();
+}
+
+//gohigh
+function gohigh() {
+new TWEEN.Tween( camera.position ).to( {x:0.1, y:12, z:0}, 600 ).start();
+
+}
+
+// button
+function invert() {
+ document.getElementById("switchValue").classList.toggle('on');
+  if (document.getElementById("switchValue").classList != "on") {
+    gohigh();
+  } else {
+    golow();
+    }
+
+  }
+
+
+window.addEventListener( 'mousemove', onMouseMove, false );
+
+// mousemove
+function onMouseMove( event ) {
+  mouse.x = ( event.clientX / renderer.domElement.clientWidth ) * 2 - 1;
+  mouse.y = - ( event.clientY / renderer.domElement.clientHeight ) * 2 + 1;
+  raycaster.setFromCamera( mouse, camera );
+// ray
+var intersects = raycaster.intersectObject( plane );
+
+if ( intersects.length > 0 ) {
+  flag.position.x = intersects[ 0 ].point.x;
+  flag.position.z = intersects[ 0 ].point.z;
+}
+
+}// mousemove
+
+//lurch
+
+
+
+//shoot
+function shoot(argument) {
+// console.log(argument)
+new TWEEN.Tween( collidableMeshList[0].position ).to( {x:collidableMeshList[0].position.x, y:collidableMeshList[0].position.y, z:collidableMeshList[0].position.z}, 100 ).start();
+}
+
+
+
+
+// START
+
+setTimeout(function() {
+// for (var i = bggroup.children.length - 1; i >= 0; i--) {
+//     bggroup.remove(bggroup.children[i]);
+// }
+// sphere.visibile=true;
+sphere.scale.set(2,2,2)
+setTimeout(function() {
+new TWEEN.Tween( sphere.scale ).to( {x:1, y:1, z:1}, 100 ).start();
+}, 90);
+
+}, 2000);
+
+
+
+colliders();
+animate();
+
+
+
+//on doc mousedown
+window.addEventListener('mousedown', function(event) {
+    clientClickX = event.clientX;
+    clientClickY = event.clientY;
+}, false);
+
+
+//on doc mouseup
+window.addEventListener('mouseup', function (ev){
+    if (ev.target == renderer.domElement) {
+        ev.preventDefault();
+        var x = ev.clientX;
+        var y = ev.clientY;
+        if( x != clientClickX || y != clientClickY )
+            return;
+
+        mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+        mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+  raycaster.setFromCamera( mouse, camera );
+  var intersects = raycaster.intersectObject( plane );
+  if (intersects.length > 0) { 
+    movehero(Math.round(intersects[ 0 ].point.x), Math.round(intersects[ 0 ].point.z));
+     }
+        
+
+    }
+}, false);
+</script>
+</body>
+</html>
